@@ -2,7 +2,7 @@
 use File::Basename;
 use File::Spec;
 
-my $judgement = File::Spec->rel2abs(dirname(dirname($0)));
+my $judgement = File::Spec->rel2abs(dirname($0)."/..");
 my $current = "$judgement/current-local";
 my ($probid, $langid) = @ARGV;
 
