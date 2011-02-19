@@ -9,7 +9,7 @@ my ($probid, $langid) = @ARGV;
 open(OVS, "$judgement/prob/$probid/ovs.txt") || die("cannot open ovs($!)");
 my @ovs_data = <OVS>;
 chomp(@ovs_data);
-my ($timelimit, $memlimit, $scoremax, $programs_str) = @ovs_data;
+my ($timelimit, $memlimit, $programs_str) = @ovs_data;
 close(OVS);
 my @programs = split / /, $programs_str;
 
@@ -31,6 +31,9 @@ for(my $i = 0; ; $i++) {
   chdir("$current");
   system("cp $datadir/* .");
   system("cp $judgement/util/default_judge/* .");
-  system("./judge.sh $i $timelimit $memlimit \"$judgement/util/lang/$langid/run.txt\"");
+  system("cp $judgement/util/judge_wrapper.sh .");
+  system("./judge_wrapper.sh $timelimit $memlimit $i \"$judgement/util/lang/$langid/run.txt\"");
 }
+
+system("rm -r $current");
 
