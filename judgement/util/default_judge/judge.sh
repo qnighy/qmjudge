@@ -1,8 +1,6 @@
 #!/bin/sh
 
-cd Main
-`cat $2` < ../input.txt > ../sol.txt
-cd ..
+./runbox.sh Main < input.txt > sol.txt
 
 if diff sol.txt output.txt >/dev/null
 then
