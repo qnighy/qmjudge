@@ -1,0 +1,26 @@
+#!/bin/sh
+
+datadir=$session
+if [ "x" != "x$1" ]; then
+  datadir=$probdir/data/$1
+fi
+timelimit=$(cat $probdir/tl.txt)
+memlimit=$(cat $probdir/ml.txt)
+
+if ! build-program; then
+  echo "CompileError"
+  exit 1
+fi
+
+ulimit -t `expr $timelimit / 1000 + 1`
+ulimit -m `expr $memlimit \* 2`
+ulimit -v `expr $memlimit \* 2`
+ulimit -p $(expr $(ps xH | wc -l) + 2)
+ulimit -s unlimited
+
+if ! cat $datadir/input.txt | /usr/bin/time -f "%U\n%S\n%M\n" -o time.txt $langdir/run.sh > $session/output.txt; then
+  echo "RuntimeError"
+  exit 1
+fi
+
+

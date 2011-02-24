@@ -1,0 +1,4 @@
+/home/qmjudge/judgement/util/qmjutil unconfined_u:object_r:qmjudge_worker_exec_t:s0
+/home/qmjudge/judgement/util/build-program unconfined_u:object_r:qmjudge_compiler_exec_t:s0
+/home/qmjudge/judgement/util/jail-in unconfined_u:object_r:qmjudge_prejail_exec_t:s0
+/home/qmjudge/judgement/current(/.*)? unconfined_u:object_r:qmjudge_workdir_t:s0
