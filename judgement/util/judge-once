@@ -7,13 +7,25 @@ fi
 timelimit=$(cat $probdir/tl.txt)
 memlimit=$(cat $probdir/ml.txt)
 
+if [ -e $probdir/Makefile.judge ]; then
+  if ! make -f $probdir/Makefile.judge; then
+    echo "Special Judge Compile Error"
+    exit 1
+  fi
+fi
+
 run-once $1 || exit 1
 
-if [ -d $probdir/judge ]; then
-  echo "Sorry; Special Judge is Not Yet Implemented"
-  exit 1
+if [ -e $probdir/Makefile.judge ]; then
+  if ./judge $datadir; then
+    echo "Correct"
+    exit 0
+  else
+    echo "Wrong"
+    exit 0
+  fi
 else
-  if diff output.txt $datadir/solution.txt >/dev/null; then
+  if diff -q output.txt $datadir/solution.txt >/dev/null; then
     echo "Correct"
     exit 0
   else
