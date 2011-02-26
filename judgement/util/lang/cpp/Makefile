@@ -4,6 +4,6 @@ CXX = g++
 CXXFLAGS = -O2 -Wall
 LDFLAGS = -lm
 
-Main: Code.txt
+main-program: Code.txt
 	$(CXX) $(CXXFLAGS) -o $@ -x c++ $^
 

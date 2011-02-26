@@ -1,6 +1,6 @@
 #!/bin/sh
 
-datadir=$session
+datadir=.
 if [ "x" != "x$1" ]; then
   datadir=$probdir/data/$1
 fi
@@ -14,11 +14,12 @@ fi
 
 ulimit -t `expr $timelimit / 1000 + 1`
 ulimit -m `expr $memlimit \* 2`
-ulimit -v `expr $memlimit \* 2`
-ulimit -p $(expr $(ps xH | wc -l) + 2)
-ulimit -s unlimited
+# ulimit -v `expr $memlimit \* 2`
+ulimit -p $(expr $(ps xH | wc -l) + 5)
+ulimit -f 20480
+# ulimit -s unlimited
 
-if ! cat $datadir/input.txt | /usr/bin/time -f "%U\n%S\n%M\n" -o time.txt $langdir/run.sh > $session/output.txt; then
+if ! cat $datadir/input.txt | /usr/bin/time -f "%U\n%S\n%M\n" -o time.txt ./main-program > output.txt; then
   echo "RuntimeError"
   exit 1
 fi

@@ -1,11 +1,10 @@
 #!/bin/sh
 
-export session=$1
 export prob=$2
 export lang=$3
-export langdir=$(dirname $0)/lang/$lang
-export probdir=$(dirname $0)/../prob/$prob
-export PATH=$(dirname $0):$PATH
+export langdir=$(cd $(dirname $0)/lang/$lang && pwd)
+export probdir=$(cd $(dirname $0)/../prob/$prob && pwd)
+export PATH=$(cd $(dirname $0) && pwd):$PATH
+cd $1
 shift; shift; shift
-
 $@

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-datadir=$session
+datadir=.
 if [ "x" != "x$1" ]; then
   datadir=$probdir/data/$1
 fi
@@ -13,7 +13,7 @@ if [ -d $probdir/judge ]; then
   echo "Sorry; Special Judge is Not Yet Implemented"
   exit 1
 else
-  if diff $session/output.txt $datadir/solution.txt >/dev/null; then
+  if diff output.txt $datadir/solution.txt >/dev/null; then
     echo "Correct"
     exit 0
   else

@@ -1,108 +1,70 @@
 policy_module(qmjudge,1.0);
 require {
-    type unconfined_t;
-    type getty_t;
-    type user_tty_device_t;
-    type home_root_t;
-    type user_home_t;
-    type user_home_dir_t;
-    type bin_t;
-    type lib_t;
-    type etc_t;
-    type usr_t;
-    type tmp_t;
-    type proc_t;
-    type locale_t;
-    type shell_exec_t;
-    role unconfined_r;
-    attribute domain;
-    attribute file_type;
-    attribute exec_type;
-}
-attribute qmjudge_domain;
-attribute qmjudge_file;
-type qmjudge_worker_t, domain, qmjudge_domain;
-type qmjudge_compiler_t, domain, qmjudge_domain;
-type qmjudge_prejail_t, domain, qmjudge_domain;
-type qmjudge_injail_t, domain, qmjudge_domain;
-type qmjudge_worker_exec_t, file_type, exec_type;
-type qmjudge_compiler_exec_t, file_type, exec_type;
-type qmjudge_prejail_exec_t, file_type, exec_type;
-type qmjudge_workdir_t, file_type, exec_type;
-type qmjudge_usercode_t, file_type, exec_type;
+    role unconfined_r, system_r;
+};
 
-type_transition unconfined_t qmjudge_worker_exec_t:process qmjudge_worker_t;
-type_transition qmjudge_worker_t qmjudge_compiler_exec_t:process qmjudge_compiler_t;
-type_transition qmjudge_worker_t qmjudge_prejail_exec_t:process qmjudge_prejail_t;
+attribute qmjudge_workproc;
+type qmjudge_worker_t, qmjudge_workproc;
+type qmjudge_compiler_t, qmjudge_workproc;
+type qmjudge_jail_t;
+
+type qmjudge_workdir_t;
+type qmjudge_problem_t;
+type qmjudge_usercode_t;
+type qmjudge_scripts_t;
+type qmjudge_compiler_exec_t;
+
+domain_type(qmjudge_worker_t);
+domain_type(qmjudge_compiler_t);
+domain_type(qmjudge_jail_t);
+domain_entry_file(qmjudge_worker_t, qmjudge_scripts_t);
+domain_entry_file(qmjudge_compiler_t, qmjudge_compiler_exec_t);
+domain_entry_file(qmjudge_jail_t, qmjudge_usercode_t);
+corecmd_executable_file(qmjudge_workdir_t);
+corecmd_executable_file(qmjudge_usercode_t);
+corecmd_executable_file(qmjudge_scripts_t);
+files_type(qmjudge_problem_t);
+
+
+domain_auto_trans(domain, qmjudge_compiler_exec_t, qmjudge_compiler_t);
+domain_auto_trans(domain, qmjudge_scripts_t, qmjudge_worker_t);
+domain_auto_trans(domain, qmjudge_workdir_t, qmjudge_worker_t);
+domain_auto_trans(domain, qmjudge_usercode_t, qmjudge_jail_t);
 type_transition qmjudge_compiler_t qmjudge_workdir_t:file qmjudge_usercode_t;
-type_transition qmjudge_prejail_t qmjudge_usercode_t:process qmjudge_injail_t;
 
-role unconfined_r types { qmjudge_worker_t qmjudge_compiler_t qmjudge_prejail_t qmjudge_injail_t };
+allow qmjudge_worker_t qmjudge_problem_t:dir {getattr search open read};
+allow qmjudge_worker_t qmjudge_problem_t:file {getattr open read};
+allow qmjudge_workproc domain:fd use;
+allow qmjudge_workproc domain:fifo_file {read write getattr ioctl};
+allow qmjudge_workproc domain:process {setrlimit sigchld signal getsched execmem};
+allow qmjudge_workproc qmjudge_scripts_t:dir {getattr search open read};
+allow qmjudge_workproc qmjudge_scripts_t:file {getattr open read execute execute_no_trans};
+allow qmjudge_workproc qmjudge_workdir_t:dir {getattr search open read write add_name};
+allow qmjudge_workproc qmjudge_workdir_t:file {getattr create open write setattr};
+corecmd_exec_bin(qmjudge_workproc);
+corecmd_exec_shell(qmjudge_workproc);
+files_list_home(qmjudge_workproc);
+files_list_root(qmjudge_workproc);
+files_manage_generic_tmp_dirs(qmjudge_workproc);
+files_manage_generic_tmp_files(qmjudge_workproc);
+files_read_etc_files(qmjudge_workproc);
+files_read_usr_files(qmjudge_workproc);
+kernel_read_kernel_sysctls(qmjudge_workproc);
+kernel_read_sysctl(qmjudge_workproc);
+kernel_read_system_state(qmjudge_workproc);
+libs_exec_lib_files(qmjudge_workproc);
+miscfiles_read_localization(qmjudge_workproc);
+role object_r types qmjudge_workproc;
+role unconfined_r types qmjudge_workproc;
+userdom_list_user_home_content(qmjudge_workproc);
+userdom_list_user_home_dirs(qmjudge_workproc);
+userdom_use_user_ttys(qmjudge_workproc);
 
-# relationship between processes
-
-allow qmjudge_worker_t qmjudge_worker_exec_t:file { entrypoint read open };
-allow unconfined_t qmjudge_worker_t:process transition;
-allow qmjudge_worker_t { qmjudge_compiler_exec_t qmjudge_prejail_exec_t }:file { getattr execute read open };
-
-allow qmjudge_compiler_t qmjudge_compiler_exec_t:file { entrypoint read open };
-allow qmjudge_worker_t qmjudge_compiler_t:process { transition rlimitinh siginh noatsecure };
-allow qmjudge_compiler_t qmjudge_worker_t:fd use;
-allow qmjudge_compiler_t qmjudge_worker_t:process sigchld; 
-
-allow qmjudge_prejail_t qmjudge_prejail_exec_t:file { entrypoint read open };
-allow qmjudge_worker_t qmjudge_prejail_t:process { transition rlimitinh siginh noatsecure };
-allow qmjudge_prejail_t qmjudge_worker_t:fd use;
-allow qmjudge_prejail_t qmjudge_worker_t:process sigchld;
-
-allow qmjudge_injail_t qmjudge_usercode_t:file { entrypoint read open };
-allow qmjudge_prejail_t qmjudge_injail_t:process { transition rlimitinh siginh noatsecure };
-allow qmjudge_prejail_t qmjudge_injail_t:process { transition };
-allow qmjudge_injail_t qmjudge_prejail_t:fd use;
-allow qmjudge_injail_t qmjudge_worker_t:fd use;
-allow qmjudge_injail_t qmjudge_prejail_t:process sigchld;
-
-# general domain allowance
-
-allow qmjudge_domain getty_t:fd use;
-allow qmjudge_domain unconfined_t:fd use;
-allow qmjudge_domain unconfined_t:process sigchld;
-allow qmjudge_domain self:fifo_file { getattr read write };
-allow qmjudge_domain user_tty_device_t:chr_file { read write getattr ioctl };
-
-# can read general directories
-
-allow { qmjudge_worker_t qmjudge_compiler_t } { etc_t proc_t usr_t bin_t lib_t locale_t shell_exec_t home_root_t qmjudge_workdir_t user_home_dir_t user_home_t }:dir { getattr search read open };
-allow { qmjudge_worker_t qmjudge_compiler_t } { etc_t proc_t usr_t bin_t lib_t locale_t shell_exec_t home_root_t qmjudge_workdir_t user_home_dir_t user_home_t }:file { read getattr open execute execute_no_trans };
-allow { qmjudge_worker_t qmjudge_compiler_t } { etc_t proc_t usr_t bin_t lib_t locale_t shell_exec_t home_root_t qmjudge_workdir_t user_home_dir_t user_home_t }:lnk_file { read getattr };
-
-# qmjudge_worker_t
-
-allow qmjudge_worker_t self:process setrlimit;
-allow qmjudge_worker_t qmjudge_workdir_t:dir { add_name write };
-allow qmjudge_worker_t qmjudge_workdir_t:file { create write };
-
-# qmjudge_compiler_t
-
-allow qmjudge_compiler_t tmp_t:dir { read write search add_name remove_name };
-allow qmjudge_compiler_t tmp_t:file { read write create open getattr unlink };
-allow qmjudge_compiler_t qmjudge_workdir_t:dir { write add_name };
-allow qmjudge_compiler_t qmjudge_workdir_t:file { setattr write create };
-allow qmjudge_compiler_t qmjudge_usercode_t:file { getattr setattr write read create open };
-
-# qmjudge_prejail_t
-
-allow qmjudge_prejail_t { home_root_t user_home_dir_t user_home_t }:dir search;
-allow qmjudge_prejail_t qmjudge_workdir_t:dir { getattr search };
-allow qmjudge_prejail_t qmjudge_workdir_t:file { getattr };
-allow qmjudge_prejail_t qmjudge_usercode_t:file { read execute open execute_no_trans };
-
-# I dont want but...
-
-allow qmjudge_prejail_t qmjudge_workdir_t:file write;
-allow qmjudge_injail_t qmjudge_workdir_t:file write;
-
-# injail
-
-# neverallow qmjudge_injail_t self:process fork;
+allow qmjudge_jail_t domain:fd use;
+allow qmjudge_jail_t domain:fifo_file {read getattr};
+allow qmjudge_jail_t domain:process sigchld;
+allow qmjudge_jail_t qmjudge_workdir_t:file write;
+userdom_use_user_ttys(qmjudge_jail_t);
+role unconfined_r types qmjudge_jail_t;
+role object_r types qmjudge_jail_t;
 
