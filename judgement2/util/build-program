@@ -3,7 +3,7 @@
 if [ ! -d Bin ]; then mkdir Bin; fi
 
 if [ -e $probdir/build.sh ]; then
-  $probdir/build.sh
+  . $probdir/build.sh
 else
   case $lang in
     cpp)
