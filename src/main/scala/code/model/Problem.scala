@@ -2,26 +2,14 @@ package code.model
 
 import net.liftweb.mapper._
 
-class TestDatum extends LongKeyedMapper[TestDatum] {
-  def getSingleton = TestDatum
-  def primaryKeyField = id
-  object id extends MappedLongIndex(this)
-  object problem extends LongMappedMapper(this, Problem)
-  object input extends MappedText(this)
-  object output extends MappedText(this)
-}
-
-object TestDatum extends TestDatum with LongKeyedMetaMapper[TestDatum]
-
-class Problem extends LongKeyedMapper[Problem] with OneToMany[Long, Problem] {
+class Problem extends LongKeyedMapper[Problem] with IdPK {
   def getSingleton = Problem
-  def primaryKeyField = id
-  object id extends MappedLongIndex(this)
-  object public extends MappedBoolean(this)
+  object published extends MappedBoolean(this)
   object title extends MappedString(this, 256)
-  object problemStatement extends MappedText(this)
-  object referenceImplementation extends MappedText(this)
-  object testData extends MappedOneToMany(TestDatum, TestDatum.problem, OrderBy(TestDatum.id, Ascending))
+  object statement extends MappedText(this)
 }
 
-object Problem extends Problem with LongKeyedMetaMapper[Problem]
+object Problem extends Problem with LongKeyedMetaMapper[Problem] {
+  override def fieldOrder = List(id)
+}
+

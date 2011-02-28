@@ -43,10 +43,13 @@ class Boot {
     def sitemap = SiteMap(
       Menu.i("Home") / "index" >> User.AddUserMenusAfter, // the simple way to declare a menu
 
+      Menu.param[Int]("Edit Problem", "EditProblem", s => Full(s toInt), i => i toString) / "edit-problem",
+
       // more complex because this menu allows anything in the
       // /static path to be visible
       Menu(Loc("Static", Link(List("static"), true, "/static/index"), 
-	       "Static Content")))
+	       "Static Content"))
+      )
 
     def sitemapMutators = User.sitemapMutator
 
