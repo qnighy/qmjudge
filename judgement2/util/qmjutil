@@ -1,0 +1,8 @@
+#!/bin/sh
+export prob=$2
+export lang=$3
+export probdir=$(cd $(dirname $0)/../prob/$prob && pwd)
+export PATH=$(cd $(dirname $0) && pwd):$PATH
+cd $1
+shift; shift; shift
+$@

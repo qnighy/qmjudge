@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if [ ! -d Bin ]; then mkdir Bin; fi
+
+if [ -e $probdir/build.sh ]; then
+  $probdir/build.sh
+else
+  case $lang in
+    cpp)
+      g++ -x c++ -o Bin/main-program Src/Code.txt || exit 1 ;;
+    java)
+      cp Src/Code.txt Src/Main.java
+      javac -d Bin Src/Main.java || exit 1 ;;
+    *) echo "No such language" >&2 ; exit 1 ;;
+  esac
+fi

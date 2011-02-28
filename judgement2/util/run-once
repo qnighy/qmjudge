@@ -1,0 +1,36 @@
+#!/bin/sh
+
+if [ ! -d Result ]; then mkdir Result; fi
+
+export datadir=.
+if [ "x" != "x$1" ]; then
+  export datadir=$probdir/data/$1
+fi
+timelimit=$(cat $probdir/tl.txt)
+memlimit=$(cat $probdir/ml.txt)
+
+if [ -e $probdir/tool/Makefile ]; then make -f $probdir/tool/Makefile -C $probdir/tool; fi
+
+ulimit -t `expr $timelimit / 1000 + 1`
+ulimit -m `expr $memlimit \* 2`
+# ulimit -p $(expr $(ps xH | wc -l) + 5)
+ulimit -f 20480
+
+if [ -e $probdir/build.sh ]; then
+  if ! /usr/bin/time -f "%U\n%S\n%M" -o Result/time.txt $probdir/run.sh; then
+    echo "RuntimeError"
+    exit 1
+  fi
+else
+  case $lang in
+    cpp) run=Bin/main-program ;;
+    java) run="java -classpath Bin Main" ;;
+    *) echo "No such language" >&2 ; exit 1 ;;
+  esac
+
+  if ! /usr/bin/time -f "%U\n%S\n%M" -o Result/time.txt jail-in $run <$datadir/input.txt >Result/output.txt 2>Result/stderr.txt; then
+    echo "RuntimeError"
+    exit 1
+  fi
+fi
+

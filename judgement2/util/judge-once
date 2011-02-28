@@ -1,0 +1,19 @@
+#!/bin/sh
+
+datadir=.
+if [ "x" != "x$1" ]; then
+  datadir=$probdir/data/$1
+fi
+timelimit=$(cat $probdir/tl.txt)
+memlimit=$(cat $probdir/ml.txt)
+
+run-once $1 || exit 1
+
+if diff -q Result/output.txt $datadir/solution.txt >/dev/null; then
+  echo "Correct"
+  exit 0
+else
+  echo "Wrong"
+  exit 0
+fi
+
