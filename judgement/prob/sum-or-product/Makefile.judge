@@ -1,5 +1,0 @@
-#!/usr/bin/make -f
-
-judge: $(probdir)/judge.sh
-	cp $^ $@
-
