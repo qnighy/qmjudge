@@ -8,9 +8,14 @@
     <div id="main" class="lift:surround?with=default;at=content">
       <h2>Welcome to your project!</h2>
       <p>
-	<span class="lift:helloWorld.howdy">
-	  Welcome to your Lift app at <span id="time">Time goes here</span>
-	</span>
+	<ul>
+	  <li class="lift:ProblemList">
+	    <span>title: <span class="problem-title"/></span> /
+	    <span>id: <span class="problem-id"/></span> /
+	    <span>link: <a class="problem-link">edit</a> </span>
+	  </li>
+	  <li class="lift:ProblemList.problemAdder?form=post"><input type="submit" value="add problem"/></li>
+	</ul>
       </p>
     </div>
   </body>

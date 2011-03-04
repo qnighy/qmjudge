@@ -13,12 +13,22 @@ class ProblemList {
 
   def probRender(prob:Problem) =
     ".problem-title *" #> prob.title.is &
-    ".problem-id *" #> prob.id.is
+    ".problem-id *" #> prob.id.is &
+    ".problem-link [href]" #> ("/edit-problem/" + prob.id.is.toString )
 
   def render(xhtml:NodeSeq):NodeSeq =
     <xml:Group>{
       Problem.findAll.flatMap { prob => probRender(prob)(xhtml) }
     }</xml:Group>
+
+  def problemAdder =
+    "type=submit" #> onSubmit(str => {
+      val problem = Problem.create
+      problem.validate match {
+        case Nil => problem.save ; S.notice("Problem saved!")
+        case x => S.error(x)
+      }
+    })
 }
 
 

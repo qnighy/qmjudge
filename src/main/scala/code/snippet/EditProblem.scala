@@ -9,9 +9,7 @@ import _root_.net.liftweb.common._
 import code.lib._
 import code.model._
 
-class EditProblem extends StatefulSnippet {
-  val problem = Problem.create
-
+class EditProblem(problem:Problem) extends StatefulSnippet {
   def dispatch = {case "render" => render}
 
   def render =
