@@ -25,72 +25,57 @@ class SubmitProblem(problem:code.model.Problem) extends StatefulSnippet {
 
 
   def render = {
-    var lang:String = defaultLang
-    var upfile:scala.collection.mutable.Map[String,String] =
-      scala.collection.mutable.Map()
-
-    Submission.find(
-      By(Submission.problem, problem),
-      By(Submission.user, User.currentUser),
-      OrderBy(Submission.datetime, Descending)
-    ) match {
-      case Full(s) =>
-        if(files.isDefinedAt(s.lang.is)) lang = s.lang.is
-        s.source_files.all.foreach(sf =>
-          // if(files(lang)(sf.name)) upfile(sf.name) = sf.code
-          upfile(sf.name) = sf.code
-        )
-      case Empty =>
-      case Failure(s,e,c) =>
-    }
+    val s:Submission =
+      Submission.find(
+        By(Submission.problem, problem),
+        By(Submission.user, User.currentUser),
+        By(Submission.state, "Saved"),
+        OrderBy(Submission.datetime, Descending)
+      ) match {
+        case Full(sn) => sn
+        case _ => Submission.create.problem(problem).user(User.currentUser).state("Saved")
+      }
+    def findfile(f:String) =
+      SourceFile.find(By(SourceFile.submission, s), By(SourceFile.name, f)) match {
+        case Full(sf) => sf
+        case _ => {
+          val sf = SourceFile.create.submission(s).name(f)
+          sf.save
+          sf
+        }
+      }
+    def filenames:List[String] = files(s.lang).toList.sorted
     def langArea:NodeSeq =
-      files(lang).toList.flatMap(f =>
+      filenames.flatMap(f =>
         <h4>{f}</h4> ++
-        // textarea(upfile.getOrElse(f,""), upfile(f) = _)
-        textarea(upfile.getOrElse(f,""), { v =>
-          System.out.println("value = '"+v+"'");
-          upfile(f) = v
-        })
+        textarea(findfile(f).code, findfile(f).code(_).save)
       )
     def changeLang(l:String):JsCmd = {
       if(files.isDefinedAt(l)) {
-        lang = l
-        upfile = scala.collection.mutable.Map()
+        s.lang(l)
       }
       SetHtml("editor_area", langArea)
     }
 
     def save():JsCmd = {
-      System.out.println("saving...")
-      val submission = Submission.create
-      submission.problem(problem)
-      submission.user(User.currentUser)
-      submission.lang(lang)
-      submission.state("Saved")
-      submission.save
-      files(lang).foreach {f =>
-        val sourcefile = SourceFile.create
-        sourcefile.submission(submission)
-        sourcefile.name(f)
-        sourcefile.code(upfile(f))
-        sourcefile.save
-      }
-      submission.validate match {
-        case Nil => submission.save; S.notice("Saved!")
-        case x => S.notice(x toString)
-      }
+      s.datetime(new java.util.Date())
+      s.save
       _Noop
+    }
+
+    def compile():JsCmd = {
+      s.datetime(new java.util.Date())
+      s.save
+      Alert("compile() not implemented; only saved"); // _Noop
     }
 
     "name=lang" #> ajaxSelect(
       files.keys.map(l => (l,SubmitProblem.langDescription(l))).toSeq,
-      Full(lang),
+      Full(s.lang),
       changeLang) &
     "#editor_area *" #> langArea &
     "name=save" #> ajaxSubmit("Save", save) &
-    "name=compile" #> ajaxSubmit("Compile", () =>
-      Alert("compile")
-    )
+    "name=compile" #> ajaxSubmit("Compile", compile)
   }
 }
 
