@@ -7,9 +7,8 @@ import _root_.net.liftweb.util._
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.common._
 import code.lib._
-import code.model._
 
-class EditProblem(problem:Problem) extends StatefulSnippet {
+class EditProblem(problem:code.model.Problem) extends StatefulSnippet {
   def dispatch = {case "render" => render}
 
   def render =

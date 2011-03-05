@@ -1,23 +1,13 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta content="text/html; charset=UTF-8" http-equiv="content-type" />
-    <title>Home</title>
-  </head>
-  <body class="lift:content_id=main">
-    <div id="main" class="lift:surround?with=default;at=content">
-      <h2>Welcome to your project!</h2>
-      <p>
-	<ul>
-	  <li class="lift:ProblemList">
-	    <span>title: <span class="problem-title"/></span> /
-	    <span>id: <span class="problem-id"/></span> /
-	    <span>link: <a class="problem-link">edit</a> </span>
-	  </li>
-	  <li class="lift:ProblemList.problemAdder?form=post"><input type="submit" value="add problem"/></li>
-	</ul>
-      </p>
-    </div>
-  </body>
-</html>
-
+<div id="main" class="lift:surround?with=default;at=content">
+  <h2>Welcome to your project!</h2>
+  <p>
+    <ul>
+      <li class="lift:ProblemList">
+	<span class="problem-title">(title)</span>
+	<a class="problem-link">view</a>
+	<a class="problem-edit-link">edit</a>
+      </li>
+      <li class="lift:ProblemList.problemAdder?form=post"><input type="submit" value="add problem"/></li>
+    </ul>
+  </p>
+</div>

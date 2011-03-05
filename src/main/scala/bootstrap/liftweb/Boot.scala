@@ -47,6 +47,10 @@ class Boot {
 	s => Problem.findByKey(s toInt),
 	p => p.id.is.toString) / "edit-problem",
 
+      Menu.param[Problem]("Problem", "Problem",
+	s => Problem.findByKey(s toInt),
+	p => p.id.is.toString) / "problem",
+
       // more complex because this menu allows anything in the
       // /static path to be visible
       Menu(Loc("Static", Link(List("static"), true, "/static/index"), 
