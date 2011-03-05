@@ -15,6 +15,7 @@ class EditProblem(problem:code.model.Problem) extends StatefulSnippet {
     "name=title" #> problem.title.toForm &
     "name=statement" #> problem.statement.toForm &
     "name=published" #> problem.published.toForm &
+    "name=dirname" #> problem.dirname.toForm &
     "type=submit" #> onSubmit(str =>
       problem.validate match {
         case Nil => problem.save ; S.notice("Problem saved!")
