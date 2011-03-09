@@ -4,12 +4,26 @@
     <span class="problem-statement-string"> </span>
   </p>
   <h3>Submit</h3>
-  <form class="lift:form.ajax">
-    <div class="lift:SubmitProblem">
-      <select name="lang"> </select>
-      <div id="editor_area"> </div>
-      <input type="submit" name="save" value="Save" />
-      <input type="submit" name="compile" value="Compile" />
+  <lift:test_cond.loggedin>
+    <form class="lift:form.ajax">
+      <div class="lift:SubmitProblem">
+        <select name="lang"> </select>
+        <div id="editor_area"> </div>
+        <input type="submit" name="save" value="Save" />
+        <input type="submit" name="compile" value="Compile" />
+      </div>
+    </form>
+    <div class="lift:comet?type=CometSubmissionList">
+      <h3>Submissions</h3>
+      <ul>
+        <li class="submission-list">
+          id:<span class="submission-id">(id)</span>
+          status:<span class="submission-state">(state)</span>
+        </li>
+      </ul>
     </div>
-  </form>
+  </lift:test_cond.loggedin>
+  <lift:test_cond.loggedout>
+    <p>To submit, please <a href="/user_mgt/login">login</a> first.</p>
+  </lift:test_cond.loggedout>
 </div>

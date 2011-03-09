@@ -16,14 +16,6 @@ import code.model._
 class SubmitProblem(problem:code.model.Problem) extends StatefulSnippet {
   def dispatch = {case "render" => render}
 
-  def files:Map[String,Set[String]] = Map(
-    "cpp" -> Set("Main.cpp"),
-    "java" -> Set("Main.java")
-  )
-
-  def defaultLang:String = files.keys.head
-
-
   def render = {
     val s:Submission =
       Submission.find(
@@ -33,25 +25,15 @@ class SubmitProblem(problem:code.model.Problem) extends StatefulSnippet {
         OrderBy(Submission.datetime, Descending)
       ) match {
         case Full(sn) => sn
-        case _ => Submission.create.problem(problem).user(User.currentUser).state("Saved")
+        case _ => Submission.create.problem(problem).user(User.currentUser).lang(problem.langs.head).state("Saved").saveMe()
       }
-    def findfile(f:String) =
-      SourceFile.find(By(SourceFile.submission, s), By(SourceFile.name, f)) match {
-        case Full(sf) => sf
-        case _ => {
-          val sf = SourceFile.create.submission(s).name(f)
-          sf.save
-          sf
-        }
-      }
-    def filenames:List[String] = files(s.lang).toList.sorted
     def langArea:NodeSeq =
-      filenames.flatMap(f =>
+      s.files.flatMap(f =>
         <h4>{f}</h4> ++
-        textarea(findfile(f).code, findfile(f).code(_).save)
+        textarea(s.findfile(f).code, s.findfile(f).code(_).save)
       )
     def changeLang(l:String):JsCmd = {
-      if(files.isDefinedAt(l)) {
+      if(problem.langs.contains(l)) {
         s.lang(l)
       }
       SetHtml("editor_area", langArea)
@@ -64,13 +46,32 @@ class SubmitProblem(problem:code.model.Problem) extends StatefulSnippet {
     }
 
     def compile():JsCmd = {
+      save()
       s.datetime(new java.util.Date())
       s.save
-      Alert("compile() not implemented; only saved"); // _Noop
+      val cs = Submission.create
+      cs.problem(s.problem.is)
+      cs.user(s.user.is)
+      cs.datetime(new java.util.Date())
+      cs.lang(s.lang.is)
+      cs.state("Compiling")
+      cs.score(0.0)
+      cs.save()
+      s.files.foreach {f =>
+        val sf = SourceFile.create.submission(cs).name(f)
+        SourceFile.find(By(SourceFile.submission, s), By(SourceFile.name, f)) match {
+          case Full(sff) => sf.code(sff.code.is)
+          case _ => sf.code("")
+        }
+        sf.save()
+      }
+      QueryServer ! new CompileQuery(cs)
+      code.comet.SubmissionUpdateServer ! (cs.user.obj.get, cs.problem.obj.get)
+      _Noop
     }
 
     "name=lang" #> ajaxSelect(
-      files.keys.map(l => (l,SubmitProblem.langDescription(l))).toSeq,
+      problem.langs.map(l => (l,SubmitProblem.langDescription(l))),
       Full(s.lang),
       changeLang) &
     "#editor_area *" #> langArea &

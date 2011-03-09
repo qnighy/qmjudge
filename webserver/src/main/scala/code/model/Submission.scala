@@ -1,6 +1,7 @@
 package code.model
 
 import net.liftweb.mapper._
+import net.liftweb.common._
 
 class Submission extends LongKeyedMapper[Submission] with IdPK with OneToMany[Long, Submission] {
   def getSingleton = Submission
@@ -9,12 +10,22 @@ class Submission extends LongKeyedMapper[Submission] with IdPK with OneToMany[Lo
   object datetime extends MappedDateTime(this) {
     override def defaultValue = new java.util.Date
   }
-  object lang extends MappedString(this, 10)
-  object source_files extends MappedOneToMany(SourceFile, SourceFile.submission, OrderBy(SourceFile.name, Ascending))
-  object state extends MappedString(this, 10)
+  object lang extends MappedString(this, 256)
+  object state extends MappedString(this, 256)
   object compile_result extends MappedText(this)
   object judge_result extends MappedText(this)
   object score extends MappedDouble(this)
+
+  def files:List[String] = problem.obj.get.files(lang.is)
+  def findfile(f:String) =
+    SourceFile.find(By(SourceFile.submission, this), By(SourceFile.name, f)) match {
+      case Full(sf) => sf
+      case _ => {
+        val sf = SourceFile.create.submission(this).name(f).code("")
+        sf.save
+        sf
+      }
+    }
 }
 
 object Submission extends Submission with LongKeyedMetaMapper[Submission]
