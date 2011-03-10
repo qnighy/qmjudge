@@ -67,7 +67,7 @@ class CometSubmissionList extends CometActor with CometListener {
 
   def renderSubmission(s:Submission) =
     ".submission-compile-time" #> s.compile_time.is.toString &
-    ".submission-lang" #> s.lang.is &
+    ".submission-lang" #> s.langname &
     ".submission-state" #> s.state.is
 
   def updateSubmissionDetail(s:Submission):()=>JsCmd = { () =>

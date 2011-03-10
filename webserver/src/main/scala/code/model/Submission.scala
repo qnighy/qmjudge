@@ -2,6 +2,7 @@ package code.model
 
 import net.liftweb.mapper._
 import net.liftweb.common._
+import code.lib._
 
 class Submission extends LongKeyedMapper[Submission] with IdPK with OneToMany[Long, Submission] {
   def getSingleton = Submission
@@ -16,6 +17,7 @@ class Submission extends LongKeyedMapper[Submission] with IdPK with OneToMany[Lo
   object judge_result extends MappedText(this)
   object score extends MappedDouble(this)
 
+  def langname:String = JudgeManager.langDescription(lang.is)
   def files:List[String] = problem.obj.get.files(lang.is)
   def findfile(f:String) =
     SourceFile.find(By(SourceFile.submission, this), By(SourceFile.name, f)) match {
