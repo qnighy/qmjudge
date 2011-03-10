@@ -83,7 +83,7 @@ class CometSubmissionList extends CometActor with CometListener {
 
   def renderSubmissionDetail(s:Submission) =
     renderSubmission(s) &
-    ".submission-compile-result" #> <pre><code>{s.compile_result}</code></pre> &
+    ".submission-compile-result" #> <pre><samp>{s.compile_result}</samp></pre> &
     ".if-compile-succeeded" #> { xhtml:NodeSeq =>
       if(s.state=="Compiling" || s.state=="Compile Error") <span></span>
       else renderTesterForm(s)(xhtml)
