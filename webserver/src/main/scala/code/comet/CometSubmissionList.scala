@@ -25,7 +25,6 @@ class CometSubmissionList extends CometActor with CometListener {
       }
     }
     case TestResult(resultString, outdata, errdata, timedata) => {
-      System.out.println("Test Result Returned!")
       test_result = resultString
       test_outdata = outdata
       test_errdata = errdata
@@ -91,14 +90,12 @@ class CometSubmissionList extends CometActor with CometListener {
     }
 
   def renderTesterForm(s:Submission) =
-    ".tester-form" #> {xhtml:NodeSeq => System.out.println("*** TesterForm ***"); ajaxForm(xhtml)} &
     "name=test-input" #> textarea(test_input, test_input = _) &
     ".test-result" #> test_result &
     ".test-outdata" #> test_outdata &
     ".test-errdata" #> test_errdata &
     ".test-timedata" #> test_timedata &
     "name=run-test" #> ajaxSubmit("run-test", { () =>
-      System.out.println("TestQuery() calling!");
       QueryServer ! new TestQuery(s, test_input, this)
       _Noop
     })

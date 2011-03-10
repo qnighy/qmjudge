@@ -29,8 +29,6 @@ object QueryServer extends Actor {
       case TestQuery(ts,indata,returnee) => {
         assert(ts.state.is == "Compiled")
 
-        System.out.println("TestQuery() called!");
-
         writeFileAll(session_file(ts, "input.txt"), indata)
 
         val tproc = run_qmjutil(ts, "run-once")
