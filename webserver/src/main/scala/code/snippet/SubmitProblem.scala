@@ -17,15 +17,13 @@ class SubmitProblem(problem:code.model.Problem) extends StatefulSnippet {
   def dispatch = {case "render" => render}
 
   def render = {
-    val s:Submission =
-      Submission.find(
-        By(Submission.problem, problem),
-        By(Submission.user, User.currentUser),
-        By(Submission.state, "Saved"),
-        OrderBy(Submission.datetime, Descending)
+    val s:SavedCode =
+      SavedCode.find(
+        By(SavedCode.problem, problem),
+        By(SavedCode.user, User.currentUser)
       ) match {
         case Full(sn) => sn
-        case _ => Submission.create.problem(problem).user(User.currentUser).lang(problem.langs.head).state("Saved").saveMe()
+        case _ => SavedCode.create.problem(problem).user(User.currentUser).lang(problem.langs.head).saveMe()
       }
     def langArea:NodeSeq =
       s.files.flatMap(f =>
@@ -40,26 +38,22 @@ class SubmitProblem(problem:code.model.Problem) extends StatefulSnippet {
     }
 
     def save():JsCmd = {
-      s.datetime(new java.util.Date())
       s.save
       _Noop
     }
 
     def compile():JsCmd = {
-      save()
-      s.datetime(new java.util.Date())
       s.save
       val cs = Submission.create
       cs.problem(s.problem.is)
       cs.user(s.user.is)
-      cs.datetime(new java.util.Date())
       cs.lang(s.lang.is)
       cs.state("Compiling")
       cs.score(0.0)
       cs.save()
       s.files.foreach {f =>
         val sf = SourceFile.create.submission(cs).name(f)
-        SourceFile.find(By(SourceFile.submission, s), By(SourceFile.name, f)) match {
+        SavedFile.find(By(SavedFile.savedcode, s), By(SavedFile.name, f)) match {
           case Full(sff) => sf.code(sff.code.is)
           case _ => sf.code("")
         }

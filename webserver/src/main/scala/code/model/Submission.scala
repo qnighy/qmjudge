@@ -7,7 +7,7 @@ class Submission extends LongKeyedMapper[Submission] with IdPK with OneToMany[Lo
   def getSingleton = Submission
   object problem extends LongMappedMapper(this, Problem)
   object user extends LongMappedMapper(this, User)
-  object datetime extends MappedDateTime(this) {
+  object compile_time extends MappedDateTime(this) {
     override def defaultValue = new java.util.Date
   }
   object lang extends MappedString(this, 256)

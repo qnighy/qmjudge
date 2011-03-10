@@ -34,14 +34,14 @@ class CometSubmissionList extends CometActor with CometListener {
       Submission.findAll(
             By(Submission.user, User.currentUser),
             By(Submission.problem, problem)).
-          filter(s => s.state.is != "Saved").
           flatMap({s =>
         renderSubmission(s)(xhtml)
       })
     }</xml:group>
 
   def renderSubmission(s:Submission) =
-    ".submission-id" #> s.id.is &
-    ".submission-state" #> s.state.is 
+    ".submission-compile-time" #> s.compile_time.is &
+    ".submission-lang" #> s.lang.is &
+    ".submission-state" #> s.state.is
 }
 
