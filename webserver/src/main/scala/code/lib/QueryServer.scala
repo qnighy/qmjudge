@@ -34,6 +34,7 @@ object QueryServer extends Actor {
         var line:String = null;
         while({line=cresult_in.readLine(); line!=null}) {
           cresult.append(line)
+          cresult.append("\n")
         }
         cs.compile_result(cresult.toString)
 

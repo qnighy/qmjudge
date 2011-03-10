@@ -17,10 +17,21 @@
       <h3>Submissions</h3>
       <ul>
         <li class="submission-list">
-          id:<span class="submission-id">(id)</span>
-          status:<span class="submission-state">(state)</span>
+          <span class="submission-compile-time">(compile_time)</span>
+          <span class="submission-lang">(lang)</span>
+          <span class="submission-state">(state)</span>
         </li>
       </ul>
+      <div class="submission-detail">
+        <h3>Submission Detail</h3>
+        <ul>
+          <li>compile time = <span class="submission-compile-time">(compile_time)</span></li>
+          <li>language = <span class="submission-lang">(lang)</span></li>
+          <li>state = <span class="submission-state">(state)</span></li>
+        </ul>
+        <h4>Compilation Result</h4>
+        <pre class="submission-compile-result"></pre>
+      </div>
     </div>
   </lift:test_cond.loggedin>
   <lift:test_cond.loggedout>
