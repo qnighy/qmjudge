@@ -65,16 +65,12 @@ class SubmitProblem(problem:code.model.Problem) extends StatefulSnippet {
     }
 
     "name=lang" #> ajaxSelect(
-      problem.langs.map(l => (l,SubmitProblem.langDescription(l))),
+      problem.langs.map(l => (l,JudgeManager.langDescription(l))),
       Full(s.lang),
       changeLang) &
     "#editor_area *" #> langArea &
     "name=save" #> ajaxSubmit("Save", save) &
     "name=compile" #> ajaxSubmit("Compile", compile)
   }
-}
-
-object SubmitProblem {
-  val langDescription:Map[String,String] = Map("cpp"->"C++","java"->"Java")
 }
 

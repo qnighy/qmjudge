@@ -5,38 +5,19 @@ import _root_.scala.actors.Actor._
 import _root_.net.liftweb.http._
 import code.lib._
 import code.model._
+import JudgeManager._
 
 object QueryServer extends Actor {
   override def act = loop {
     react {
       case CompileQuery(cs) => {
-        val iocs = new java.io.File("/home/qnighy/qmjudge/judgement/session/"+cs.id.is)
-        val srcdir = new java.io.File(iocs, "Src")
-        iocs.mkdir()
-        srcdir.mkdir()
+        assert(cs.state.is == "Compiling")
         cs.files.foreach {f =>
-          val iosf = new java.io.File(srcdir, f);
-          val iopw = new java.io.PrintWriter(new java.io.FileWriter(iosf))
-          iopw.print(cs.findfile(f).code.is)
-          iopw.close()
+          writeFileAll(session_srcfile(cs, f), cs.findfile(f).code.is)
         }
-        val cproc = new ProcessBuilder(
-            "/home/qnighy/qmjudge/judgement/util/qmjutil",
-            iocs.getAbsolutePath(),
-            cs.problem.obj.get.dirname.is,
-            cs.lang.is,
-            "build-program"
-          ).start();
-        cproc.waitFor()
+        val cproc = run_qmjutil(cs, "build-program")
 
-        val cresult_in = new java.io.BufferedReader(new java.io.InputStreamReader(cproc.getErrorStream()))
-        val cresult = new StringBuffer()
-        var line:String = null;
-        while({line=cresult_in.readLine(); line!=null}) {
-          cresult.append(line)
-          cresult.append("\n")
-        }
-        cs.compile_result(cresult.toString)
+        cs.compile_result(readAll(cproc.getErrorStream()))
 
         if(cproc.exitValue()==0) {
           cs.state("Compiled").save()
@@ -45,6 +26,30 @@ object QueryServer extends Actor {
         }
         code.comet.SubmissionUpdateServer ! (cs.user.obj.get, cs.problem.obj.get)
       }
+      case TestQuery(ts,indata,returnee) => {
+        assert(ts.state.is == "Compiled")
+
+        System.out.println("TestQuery() called!");
+
+        writeFileAll(session_file(ts, "input.txt"), indata)
+
+        val tproc = run_qmjutil(ts, "run-once")
+
+        val tresult = readAll(tproc.getInputStream())
+        val resultString:String =
+          if(tresult containsSlice "RuntimeError")
+            "Runtime Error"
+          else if(tproc.exitValue()==1)
+            "System Error"
+          else
+            "Succesfully Run"
+
+        val outdata = readFileAll(session_resultfile(ts,"output.txt"))
+        val errdata = readFileAll(session_resultfile(ts,"stderr.txt"))
+        val timedata = readFileAll(session_resultfile(ts,"time.txt"))
+
+        returnee ! new TestResult(resultString, outdata, errdata, timedata)
+      }
     }
   }
   this.start
@@ -52,3 +57,6 @@ object QueryServer extends Actor {
 
 case class CompileQuery(val s:Submission)
 
+case class TestQuery(val s:Submission, val indata:String, val returnee:CometActor)
+
+case class TestResult(resultString:String, outdata:String, errdata:String, timedata:String)
