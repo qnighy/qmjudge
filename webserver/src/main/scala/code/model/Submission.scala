@@ -19,11 +19,11 @@ class Submission extends LongKeyedMapper[Submission] with IdPK with OneToMany[Lo
 
   def langname:String = JudgeManager.langDescription(lang.is)
   def files:List[String] = problem.obj.get.files(lang.is)
-  def findfile(f:String) =
+  def findfile(f:String):SourceFile =
     SourceFile.find(By(SourceFile.submission, this), By(SourceFile.name, f)) match {
       case Full(sf) => sf
       case _ => {
-        val sf = SourceFile.create.submission(this).name(f).code("")
+        val sf = SourceFile.create.submission(this).name(f)
         sf.save
         sf
       }
@@ -35,7 +35,7 @@ object Submission extends Submission with LongKeyedMetaMapper[Submission]
 class SourceFile extends LongKeyedMapper[SourceFile] with IdPK {
   def getSingleton = SourceFile
   object submission extends LongMappedMapper(this, Submission)
-  object name extends MappedString(this, 100)
+  object name extends MappedString(this, 256)
   object code extends MappedText(this)
 }
 

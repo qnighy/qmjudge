@@ -17,10 +17,11 @@ class SubmitProblem(problem:code.model.Problem) extends StatefulSnippet {
   def dispatch = {case "render" => render}
 
   def render = {
-    val s:SavedCode =
+    var s:SavedCode =
       SavedCode.find(
         By(SavedCode.problem, problem),
-        By(SavedCode.user, User.currentUser)
+        By(SavedCode.user, User.currentUser),
+        OrderBy(SavedCode.savetime, Descending)
       ) match {
         case Full(sn) => sn
         case _ => SavedCode.create.problem(problem).user(User.currentUser).lang(problem.langs.head).saveMe()
@@ -30,14 +31,32 @@ class SubmitProblem(problem:code.model.Problem) extends StatefulSnippet {
         <h4>{f}</h4> ++
         textarea(s.findfile(f).code, s.findfile(f).code(_).save)
       )
+    def langArea_withdefault:NodeSeq =
+      s.files.flatMap(f =>
+        <h4>{f}</h4> ++
+        textarea(s.findDefault(f), s.findfile(f).code(_).save)
+      )
     def changeLang(l:String):JsCmd = {
-      if(problem.langs.contains(l)) {
-        s.lang(l)
-      }
+      if(!problem.langs.contains(l)) return _Noop
+      s =
+        SavedCode.find(
+          By(SavedCode.problem, problem),
+          By(SavedCode.user, User.currentUser),
+          By(SavedCode.lang, l),
+          OrderBy(SavedCode.savetime, Descending)
+        ) match {
+          case Full(sn) => sn
+          case _ => SavedCode.create.problem(problem).user(User.currentUser).lang(l).saveMe()
+        }
       SetHtml("editor_area", langArea)
     }
 
+    def reset_source():JsCmd = {
+      SetHtml("editor_area", langArea_withdefault)
+    }
+
     def save():JsCmd = {
+      s.savetime(new java.util.Date)
       s.save
       _Noop
     }
@@ -69,6 +88,7 @@ class SubmitProblem(problem:code.model.Problem) extends StatefulSnippet {
       Full(s.lang),
       changeLang) &
     "#editor_area *" #> langArea &
+    "name=reset" #> ajaxSubmit("Reset", reset_source) &
     "name=save" #> ajaxSubmit("Save", save) &
     "name=compile" #> ajaxSubmit("Compile", compile)
   }

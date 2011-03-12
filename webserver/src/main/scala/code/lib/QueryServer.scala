@@ -33,20 +33,26 @@ object QueryServer extends Actor {
 
         val tproc = run_qmjutil(ts, "run-once")
 
+        val outdata = readFileAll(session_resultfile(ts,"output.txt"))
+        val errdata = readFileAll(session_resultfile(ts,"stderr.txt"))
+        val timedata = parse_timedata(readFileAll(session_resultfile(ts,"time.txt")))
+        val time = timedata._1
+        val mem = timedata._2
+
         val tresult = readAll(tproc.getInputStream())
         val resultString:String =
-          if(tresult containsSlice "RuntimeError")
+          if(mem > ts.problem.obj.get.memlimit)
+            "Memory Limit Exceeded"
+          else if(time > ts.problem.obj.get.timelimit)
+            "Time Limit Exceeded"
+          else if(tresult containsSlice "RuntimeError")
             "Runtime Error"
           else if(tproc.exitValue()==1)
             "System Error"
           else
             "Succesfully Run"
 
-        val outdata = readFileAll(session_resultfile(ts,"output.txt"))
-        val errdata = readFileAll(session_resultfile(ts,"stderr.txt"))
-        val timedata = readFileAll(session_resultfile(ts,"time.txt"))
-
-        returnee ! new TestResult(resultString, outdata, errdata, timedata)
+        returnee ! new TestResult(resultString, outdata, errdata, time, mem)
       }
     }
   }
@@ -57,4 +63,4 @@ case class CompileQuery(val s:Submission)
 
 case class TestQuery(val s:Submission, val indata:String, val returnee:CometActor)
 
-case class TestResult(resultString:String, outdata:String, errdata:String, timedata:String)
+case class TestResult(resultString:String, outdata:String, errdata:String, time:Int, mem:Int)

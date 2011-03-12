@@ -17,7 +17,7 @@ ulimit -m `expr $memlimit \* 2`
 ulimit -f 20480
 
 if [ -e $probdir/build.sh ]; then
-  if ! /usr/bin/time -f "%U\n%S\n%M" -o Result/time.txt $probdir/run.sh; then
+  if ! /usr/bin/time -f "%U %S %M" -o Result/time.txt $probdir/run.sh; then
     echo "RuntimeError"
     exit 1
   fi
@@ -28,7 +28,7 @@ else
     *) echo "No such language" >&2 ; exit 1 ;;
   esac
 
-  if ! /usr/bin/time -f "%U\n%S\n%M" -o Result/time.txt jail-in $run <$datadir/input.txt >Result/output.txt 2>Result/stderr.txt; then
+  if ! /usr/bin/time -f "%U %S %M" -o Result/time.txt jail-in $run <$datadir/input.txt >Result/output.txt 2>Result/stderr.txt; then
     echo "RuntimeError"
     exit 1
   fi
