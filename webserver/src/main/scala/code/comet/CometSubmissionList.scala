@@ -24,12 +24,10 @@ class CometSubmissionList extends CometActor with CometListener {
         reRender()
       }
     }
-    case TestResult(resultString, outdata, errdata, time, mem) => {
-      test_result = resultString
+    case TestResult(result, outdata, errdata) => {
+      test_result = result
       test_outdata = outdata
       test_errdata = errdata
-      test_time = time
-      test_mem = mem
       reRender()
     }
   }
@@ -77,11 +75,9 @@ class CometSubmissionList extends CometActor with CometListener {
   }
 
   private var test_input:String = ""
-  private var test_result:String = ""
+  private var test_result:CaseResult = new CaseResult(ResultDescription.SuccessfullyRun, 0, 0)
   private var test_outdata:String = ""
   private var test_errdata:String = ""
-  private var test_time = -1
-  private var test_mem = -1
 
   def renderSubmissionDetail(s:Submission) =
     renderSubmission(s) &
@@ -93,11 +89,9 @@ class CometSubmissionList extends CometActor with CometListener {
 
   def renderTesterForm(s:Submission) =
     "name=test-input" #> textarea(test_input, test_input = _) &
-    ".test-result" #> test_result &
+    ".test-result" #> test_result.description &
     ".test-outdata" #> test_outdata &
     ".test-errdata" #> test_errdata &
-    ".test-time" #> ("%02d.%03d".format(test_time/1000,test_time%1000)) &
-    ".test-mem" #> (if(test_mem<10000) "Lowmem" else "%dKB".format(test_mem)) &
     "name=run-test" #> ajaxSubmit("", { () =>
       QueryServer ! new TestQuery(s, test_input, this)
       _Noop

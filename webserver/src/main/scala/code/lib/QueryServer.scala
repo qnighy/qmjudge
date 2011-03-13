@@ -40,19 +40,19 @@ object QueryServer extends Actor {
         val mem = timedata._2
 
         val tresult = readAll(tproc.getInputStream())
-        val resultString:String =
+        val resultDsc:ResultDescription.Value =
           if(mem > ts.problem.obj.get.memlimit)
-            "Memory Limit Exceeded"
+            ResultDescription.MemoryLimitExceeded
           else if(time > ts.problem.obj.get.timelimit)
-            "Time Limit Exceeded"
+            ResultDescription.TimeLimitExceeded
           else if(tresult containsSlice "RuntimeError")
-            "Runtime Error"
+            ResultDescription.RuntimeError
           else if(tproc.exitValue()==1)
-            "System Error"
+            ResultDescription.SystemError
           else
-            "Succesfully Run"
+            ResultDescription.SuccessfullyRun
 
-        returnee ! new TestResult(resultString, outdata, errdata, time, mem)
+        returnee ! new TestResult(new CaseResult(resultDsc, time, mem), outdata, errdata)
       }
     }
   }
@@ -63,4 +63,4 @@ case class CompileQuery(val s:Submission)
 
 case class TestQuery(val s:Submission, val indata:String, val returnee:CometActor)
 
-case class TestResult(resultString:String, outdata:String, errdata:String, time:Int, mem:Int)
+case class TestResult(result:CaseResult, outdata:String, errdata:String)
