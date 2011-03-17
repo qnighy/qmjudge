@@ -16,7 +16,8 @@ object JudgeManager {
         session_dir(s).getAbsolutePath() ::
         s.problem.obj.get.dirname.is ::
         s.lang.is ::
-        args.toList).start()
+        args.toList).redirectErrorStream(true).start()
+    proc.getOutputStream().close()
     proc.waitFor()
     return proc
   }

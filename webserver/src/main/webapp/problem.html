@@ -5,16 +5,14 @@
   </p>
   <h3>Submit</h3>
   <lift:test_cond.loggedin>
-    <form class="lift:form.ajax">
-      <div class="lift:SubmitProblem">
+    <div class="lift:comet?type=CometSubmissionList">
+      <div class="submit-form">
         <select name="lang"> </select>
         <div id="editor_area"> </div>
         <input type="submit" name="reset" value="Reset" />
         <input type="submit" name="save" value="Save" />
         <input type="submit" name="compile" value="Compile" />
       </div>
-    </form>
-    <div class="lift:comet?type=CometSubmissionList">
       <h3>Submissions</h3>
       <ul>
         <li class="submission-list">

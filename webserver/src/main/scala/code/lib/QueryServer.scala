@@ -10,21 +10,22 @@ import JudgeManager._
 object QueryServer extends Actor {
   override def act = loop {
     react {
-      case CompileQuery(cs) => {
+      case CompileQuery(cs,returnee) => {
         assert(cs.state.is == "Compiling")
         cs.files.foreach {f =>
           writeFileAll(session_srcfile(cs, f), cs.findfile(f).code.is)
         }
         val cproc = run_qmjutil(cs, "build-program")
+        cs.compile_result(readAll(cproc.getInputStream()))
+        val exv = cproc.exitValue();
+        cproc.destroy();
 
-        cs.compile_result(readAll(cproc.getErrorStream()))
-
-        if(cproc.exitValue()==0) {
+        if(exv==0) {
           cs.state("Compiled").save()
         } else {
           cs.state("Compile Error").save()
         }
-        code.comet.SubmissionUpdateServer ! (cs.user.obj.get, cs.problem.obj.get)
+        returnee ! cs
       }
       case TestQuery(ts,indata,returnee) => {
         assert(ts.state.is == "Compiled")
@@ -59,8 +60,10 @@ object QueryServer extends Actor {
   this.start
 }
 
-case class CompileQuery(val s:Submission)
+case class CompileQuery(val s:Submission, val returnee:CometActor)
 
 case class TestQuery(val s:Submission, val indata:String, val returnee:CometActor)
+
+case class JudgeQuery(val s:Submission, val returnee:CometActor)
 
 case class TestResult(result:CaseResult, outdata:String, errdata:String)
