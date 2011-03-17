@@ -1,2 +1,9 @@
-This will be an online judge system.
+This is a general Online Judge(OJ) system, written in Scala/Lift.
 
+Online Judge is a web service where you can submit a source code for a problem, and you know whether the program is correct or wrong. The famous examples for Online Judge are POJ(Peking university Online Judge), SPOJ(Sphere Online Judge), AOJ(Aizu-university Online Judge).
+
+The features of this program is as follows:
+* Compatibility to a kind of problems in IOI. In particular, this supports partial scoring.
+* Convenience in coding in your web browser. Online testing in your input is available.
+
+The web server program is written with Scala/Lift. The judge server program is written for Linux.
