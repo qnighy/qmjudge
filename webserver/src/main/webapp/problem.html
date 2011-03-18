@@ -6,12 +6,14 @@
   <h3>Submit</h3>
   <lift:test_cond.loggedin>
     <div class="lift:comet?type=CometSubmissionList">
-      <div class="submit-form">
-        <select name="lang"> </select>
-        <div id="editor_area"> </div>
-        <input type="submit" name="reset" value="Reset" />
-        <input type="submit" name="save" value="Save" />
-        <input type="submit" name="compile" value="Compile" />
+      <div id="submit-form">
+        Language: <select id="submission-language"></select>
+        <div class="source-editor">
+          <div id="submission-editor"></div>
+        </div>
+        <input type="submit" id="reset-submission" value="Reset" />
+        <input type="submit" id="save-submission" value="Save" />
+        <input type="submit" id="compile-submission" value="Compile" />
       </div>
       <h3>Submissions</h3>
       <ul>

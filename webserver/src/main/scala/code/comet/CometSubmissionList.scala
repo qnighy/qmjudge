@@ -40,10 +40,10 @@ class CometSubmissionList extends CometActor {
   private val detail_id = uniqueId+"_submission_detail"
   private var detail_xhtml:NodeSeq = List()
   def render = {
-    ".submit-form" #> {xhtml:NodeSeq =>
-      <lift:form.post>{
+    "#submit-form" #> {xhtml:NodeSeq =>
+      <lift:form.ajax>{
         renderSubmitForm(xhtml)
-      }</lift:form.post>
+      }</lift:form.ajax>
     }&
     ".submission-list" #> (submission_list(_)) &
     ".submission-detail" #> {xhtml:NodeSeq =>
@@ -88,11 +88,11 @@ class CometSubmissionList extends CometActor {
           case Full(sn) => sn
           case _ => SavedCode.create.problem(problem).user(User.currentUser).lang(l).saveMe()
         }
-      SetHtml("editor_area", langArea)
+      SetHtml("submission-editor", langArea)
     }
 
     def reset_source():JsCmd = {
-      SetHtml("editor_area", langArea_withdefault)
+      SetHtml("submission-editor", langArea_withdefault)
     }
 
     def save():JsCmd = {
@@ -119,17 +119,18 @@ class CometSubmissionList extends CometActor {
         sf.save()
       }
       QueryServer ! new CompileQuery(cs, this)
+      reRender()
       _Noop
     }
 
-    "name=lang" #> ajaxSelect(
+    "#submission-language" #> ajaxSelect(
       problem.langs.map(l => (l,JudgeManager.langDescription(l))),
       Full(s.lang),
       changeLang) &
-    "#editor_area *" #> langArea &
-    "name=reset" #> ajaxSubmit("Reset", reset_source) &
-    "name=save" #> ajaxSubmit("Save", save) &
-    "name=compile" #> ajaxSubmit("Compile", compile)
+    "#submission-editor *" #> langArea &
+    "#reset-submission" #> ajaxSubmit("Reset", reset_source) &
+    "#save-submission" #> ajaxSubmit("Save", save) &
+    "#compile-submission" #> ajaxSubmit("Compile", compile)
   }
 
   def submission_list(xhtml:NodeSeq):NodeSeq =
