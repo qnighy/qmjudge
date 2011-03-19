@@ -5,7 +5,7 @@
   </p>
   <h3>Submit</h3>
   <lift:test_cond.loggedin>
-    <div class="lift:comet?type=CometSubmissionList">
+    <div class="lift:comet?type=SubmitProblem">
       <div id="submit-form">
         Language: <select id="submission-language"></select>
         <div class="source-editor">
@@ -16,14 +16,14 @@
         <input type="submit" id="compile-submission" value="Compile" />
       </div>
       <h3>Submissions</h3>
-      <ul>
-        <li class="submission-list">
+      <ul id="submission-list-area">
+        <li class="submission-list-item">
           <span class="submission-compile-time">(compile_time)</span>
           <span class="submission-lang">(lang)</span>
           <span class="submission-state">(state)</span>
         </li>
       </ul>
-      <div class="submission-detail">
+      <div id="submission-detail">
         <h3>Submission Detail</h3>
         <ul>
           <li>compile time = <span class="submission-compile-time">(compile_time)</span></li>
@@ -32,21 +32,19 @@
         </ul>
         <h4>Compilation Result</h4>
         <pre class="submission-compile-result"></pre>
-        <div class="if-compile-succeeded">
-          <h4>Test</h4>
-          <form class="lift:form.ajax">
-            <p>Input:</p>
-            <textarea name="test-input"></textarea>
-            <input type="submit" name="run-test" value="Run Test" />
-          </form>
-          <p>Result:<span class="test-result"></span></p>
-          <p>Time:<span class="test-time"></span></p>
-          <p>Mem:<span class="test-mem"></span></p>
-          <p>Output:</p>
-          <pre><samp><span class="test-outdata"></span></samp></pre>
-          <p>Stderr:</p>
-          <pre><samp><span class="test-errdata"></span></samp></pre>
-        </div>
+      </div>
+      <h4>Test</h4>
+      <div id="tester-form">
+        <p>Input:</p>
+        <textarea id="tester-input-area"></textarea>
+        <input type="submit" id="run-tester" value="Run Test" />
+      </div>
+      <div id="test-result-area">
+        <p>Result:<span class="tester-result"></span></p>
+        <p>Output:</p>
+        <pre><samp><span class="tester-outdata"></span></samp></pre>
+        <p>Stderr:</p>
+        <pre><samp><span class="tester-errdata"></span></samp></pre>
       </div>
     </div>
   </lift:test_cond.loggedin>
