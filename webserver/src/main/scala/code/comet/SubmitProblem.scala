@@ -174,7 +174,7 @@ class SubmitProblem extends CometActor {
         "#tester-input-area" #> textarea(test_input, test_input = _) &
         "#run-tester" #> { xhtml:NodeSeq =>
           SubmissionDetail.target match {
-            case Full(s) if s.state.is == "Compiled" => ajaxSubmit(
+            case Full(s) if s.runnable => ajaxSubmit(
               xhtml match {
                 case Seq(e:Elem) => e.attribute("value").getOrElse("_").toString
                 case _ => "_"
