@@ -17,6 +17,8 @@ ulimit -m `expr $memlimit \* 2`
 ulimit -f 20480
 
 if [ -e $probdir/build.sh ]; then
+  touch Result/output.txt
+  touch Result/stderr.txt
   if ! /usr/bin/time -f "%U %S %M" -o Result/time.txt $probdir/run.sh; then
     echo "RuntimeError"
     exit 1
