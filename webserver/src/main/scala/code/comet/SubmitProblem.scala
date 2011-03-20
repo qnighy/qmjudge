@@ -26,6 +26,9 @@ class SubmitProblem extends CometActor {
       TesterResultArea.result = r
       partialUpdate(TesterResultArea.reHtml)
     }
+    case (s:Submission,r:JudgeResult) => {
+      partialUpdate(SubmissionList.reHtml & JudgeResultArea.reHtml)
+    }
   }
 
   def newest_submission:Box[Submission] =
@@ -37,6 +40,8 @@ class SubmitProblem extends CometActor {
     "#submit-form *" #> (SubmitForm.render(_:NodeSeq)) &
     SubmissionList.binder &
     SubmissionDetail.binder &
+    JudgeForm.binder &
+    JudgeResultArea.binder &
     TesterForm.binder &
     TesterResultArea.binder
 
@@ -156,12 +161,62 @@ class SubmitProblem extends CometActor {
     def setSubmission(s:Submission):()=>JsCmd = { () =>
       target = Full(s)
       TesterResultArea.result = TesterResultArea.default_result
-      SubmissionList.reHtml & SubmissionDetail.reHtml & TesterForm.reHtml & TesterResultArea.reHtml
+      SubmissionList.reHtml & SubmissionDetail.reHtml & JudgeForm.reHtml & JudgeResultArea.reHtml & TesterForm.reHtml & TesterResultArea.reHtml
     }
 
     def renderIt(s:Submission) =
       SubmissionDescription.render(s) &
       ".submission-compile-result" #> <pre><samp>{s.compile_result}</samp></pre>
+  }
+  object JudgeForm extends ReloadableComponent {
+    override def component_id = "judge-form"
+    override def render():NodeSeq = <lift:form.ajax>{renderVal()}</lift:form.ajax>
+    def renderVal():NodeSeq = {
+      (
+        "#run-judge" #> { xhtml:NodeSeq =>
+          SubmissionDetail.target match {
+            case Full(s) if s.judgeable => ajaxSubmit(
+              xhtml match {
+                case Seq(e:Elem) => e.attribute("value").getOrElse("_").toString
+                case _ => "_"
+              }, { () =>
+                assert(s.judgeable)
+                s.state("Queueing").save()
+                QueryServer ! new JudgeQuery(s, SubmitProblem.this)
+                SubmissionList.reHtml & SubmissionDetail.reHtml & JudgeResultArea.reHtml
+            })
+            case _ => NodeSeq.Empty
+          }
+        }
+      )(cache)
+    }
+  }
+  object JudgeResultArea extends ReloadableComponent {
+    override def component_id = "judge-result-area"
+
+    override def render():NodeSeq = SubmissionDetail.target match {
+      case Full(s) =>
+        if(s.state.is == "Queueing")
+          <p>Queueing...</p>
+        else if(s.state.is == "Judging" || s.state.is == "Judged")
+          renderVal(s)
+        else
+          NodeSeq.Empty
+      case _ => NodeSeq.Empty
+    }
+
+    def renderVal(s:Submission):NodeSeq =
+      (
+        ".case-result-area" #> (renderCaseResults(s)(_:NodeSeq))
+      )(cache)
+
+    def renderCaseResults(s:Submission)(xhtml:NodeSeq):NodeSeq =
+      new JudgeResult(s.judge_result.is).l.zipWithIndex.flatMap({ case (cr,i) =>
+        renderCaseResult(cr,i)(xhtml)
+      })
+    def renderCaseResult(cr:CaseResult, i:Int):(NodeSeq=>NodeSeq) =
+      ".case-id" #> i.toString &
+      ".case-result" #> cr.description
   }
   object TesterForm extends ReloadableComponent {
     override def component_id = "tester-form"

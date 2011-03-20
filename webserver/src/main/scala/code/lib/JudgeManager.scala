@@ -46,6 +46,14 @@ object JudgeManager {
   def problem_dir(p:Problem) = new File(problem_base_dir,p.dirname.is)
   def problem_file(p:Problem, sp:String) = new File(problem_dir(p), sp)
 
+  def problem_datalen(p:Problem):Int = {
+    var i:Int = 0
+    while(new File(problem_file(p, "data"), i.toString).isDirectory()) {
+      i += 1
+    }
+    return i
+  }
+
   def readAll(in:java.io.InputStream, limit:Int=1048576):String = {
     val isr = new java.io.InputStreamReader(in)
 

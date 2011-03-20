@@ -2,6 +2,10 @@ package code.lib
 
 case class JudgeResult(l:List[CaseResult]) {
   def this(s:String) = this(s.lines.map{l => new CaseResult(l)}.toList)
+  def this(n:Int) = this((0 until n).map{i =>
+    new CaseResult(ResultDescription.Waiting, 0, 0)}.toList)
+  def this(b:JudgeResult,i:Int,c:CaseResult) =
+    this(b.l.zipWithIndex.map{ case (_,`i`) => c; case (cc,_) => cc})
   override def toString() = l.mkString("")
 }
 

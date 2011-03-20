@@ -28,7 +28,7 @@ object QueryServer extends Actor {
         returnee ! cs
       }
       case TestQuery(ts,indata,returnee) => {
-        assert(ts.state.is == "Compiled")
+        assert(ts.runnable)
 
         writeFileAll(session_file(ts, "input.txt"), indata)
 
@@ -54,6 +54,50 @@ object QueryServer extends Actor {
             ResultDescription.SuccessfullyRun
 
         returnee ! new TestResult(new CaseResult(resultDsc, time, mem), indata, outdata, errdata)
+      }
+      case JudgeQuery(js,returnee) => {
+        assert(js.state.is == "Queueing")
+
+        val n = problem_datalen(js.problem.obj.get)
+        var jr = new JudgeResult(n)
+        js.state("Judging").judge_result(jr.toString).save()
+        returnee ! (js, jr)
+        println("initializing...")
+        println("judge_result = "+jr.toString)
+        println("n = "+n);
+        for(i <- 0 until n) {
+          println("i = "+i);
+          val jproc = run_qmjutil(js, "judge-once", i.toString)
+
+          val timedata = parse_timedata(readFileAll(session_resultfile(js,"time.txt")))
+          val time = timedata._1
+          val mem = timedata._2
+
+          val jresult = readAll(jproc.getInputStream())
+          val resultDsc:ResultDescription.Value =
+            if(mem > js.problem.obj.get.memlimit)
+              ResultDescription.MemoryLimitExceeded
+            else if(time > js.problem.obj.get.timelimit)
+              ResultDescription.TimeLimitExceeded
+            else if(jresult containsSlice "RuntimeError")
+              ResultDescription.RuntimeError
+            else if(jproc.exitValue()==1)
+              ResultDescription.SystemError
+            else if(jresult containsSlice "Wrong")
+              ResultDescription.WrongAnswer
+            else if(jresult containsSlice "Correct")
+              ResultDescription.Accepted
+            else
+              ResultDescription.SystemError
+
+          jr = new JudgeResult(jr, i, new CaseResult(resultDsc, time, mem))
+          println("judge_result ="+jr.toString)
+          js.state("Judging").judge_result(jr.toString).save()
+          returnee ! (js, jr)
+        }
+        js.state("Judged").save()
+        returnee ! (js, jr)
+        println("Judged! result="+jr.toString)
       }
     }
   }

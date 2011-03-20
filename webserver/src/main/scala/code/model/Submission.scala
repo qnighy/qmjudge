@@ -17,7 +17,7 @@ class Submission extends LongKeyedMapper[Submission] with IdPK with OneToMany[Lo
   object judge_result extends MappedText(this)
   object score extends MappedDouble(this)
 
-  def runnable:Boolean = state.is == "Compiled" || state.is == "Judging" || state.is == "Judged"
+  def runnable:Boolean = state.is == "Compiled" || state.is == "Queueing" || state.is == "Judging" || state.is == "Judged"
   def judgeable:Boolean = state.is == "Compiled"
 
   def langname:String = JudgeManager.langDescription(lang.is)
