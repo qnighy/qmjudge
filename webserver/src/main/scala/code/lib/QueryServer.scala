@@ -53,7 +53,7 @@ object QueryServer extends Actor {
           else
             ResultDescription.SuccessfullyRun
 
-        returnee ! new TestResult(new CaseResult(resultDsc, time, mem), outdata, errdata)
+        returnee ! new TestResult(new CaseResult(resultDsc, time, mem), indata, outdata, errdata)
       }
     }
   }
@@ -66,4 +66,4 @@ case class TestQuery(val s:Submission, val indata:String, val returnee:CometActo
 
 case class JudgeQuery(val s:Submission, val returnee:CometActor)
 
-case class TestResult(result:CaseResult, outdata:String, errdata:String)
+case class TestResult(result:CaseResult, indata:String, outdata:String, errdata:String)

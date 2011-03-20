@@ -23,7 +23,7 @@ class SubmitProblem extends CometActor {
       partialUpdate(SubmissionList.reHtml)
     }
     case r:TestResult => {
-      TesterResultArea.setTestResult(r)
+      TesterResultArea.result = r
       partialUpdate(TesterResultArea.reHtml)
     }
   }
@@ -118,23 +118,23 @@ class SubmitProblem extends CometActor {
 
   object SubmissionList extends ReloadableComponent {
     override def component_id = "submission-list-area"
-    private var item_cache:NodeSeq = NodeSeq.Empty
 
     def render():NodeSeq =
       (
         ".submission-list-item" #> (renderItems(_:NodeSeq))
       )(cache)
-    def renderItems(xhtml:NodeSeq):NodeSeq = { item_cache = xhtml; renderItems() }
-    def renderItems():NodeSeq =
-      <xml:group>{
+
+    def renderItems(xhtml:NodeSeq):NodeSeq =
         Submission.findAll(
           By(Submission.user, User.currentUser),
           By(Submission.problem, problem),
           OrderBy(Submission.compile_time, Descending)).
-        flatMap({s =>
-          a(SubmissionDetail.setSubmission(s), SubmissionDescription.render(s)(item_cache))
-               })
-      }</xml:group>
+        flatMap({ s => renderItem(s)(xhtml) })
+    def renderItem(s:Submission)(xhtml:NodeSeq):NodeSeq =
+      if(SubmissionDetail.target == Full(s))
+        SubmissionDescription.render(s)(xhtml)
+      else
+        a(SubmissionDetail.setSubmission(s), SubmissionDescription.render(s)(xhtml))
   }
   object SubmissionDescription {
     def render(s:Submission) =
@@ -155,7 +155,8 @@ class SubmitProblem extends CometActor {
     }
     def setSubmission(s:Submission):()=>JsCmd = { () =>
       target = Full(s)
-      SubmissionDetail.reHtml & TesterForm.reHtml
+      TesterResultArea.result = TesterResultArea.default_result
+      SubmissionList.reHtml & SubmissionDetail.reHtml & TesterForm.reHtml & TesterResultArea.reHtml
     }
 
     def renderIt(s:Submission) =
@@ -179,9 +180,7 @@ class SubmitProblem extends CometActor {
                 case _ => "_"
               }, { () =>
               QueryServer ! new TestQuery(s, test_input, SubmitProblem.this)
-              TesterResultArea.setTestResult(
-                new TestResult(
-                  new CaseResult(ResultDescription.Waiting, 0, 0), "", ""))
+              TesterResultArea.result = TesterResultArea.waiting_result
               TesterResultArea.reHtml
             })
             case _ => NodeSeq.Empty
@@ -192,24 +191,18 @@ class SubmitProblem extends CometActor {
   }
   object TesterResultArea extends ReloadableComponent {
     override def component_id = "test-result-area"
-    private var test_input:String = ""
-    private var test_result:CaseResult = new CaseResult(ResultDescription.NotYet, 0, 0)
-    private var test_outdata:String = ""
-    private var test_errdata:String = ""
-
-    def setTestResult(r:TestResult):Unit = r match {
-      case TestResult(result, outdata, errdata) => {
-        test_result = result
-        test_outdata = outdata
-        test_errdata = errdata
-      }
-    }
+    val default_result = new TestResult(
+      new CaseResult(ResultDescription.NotYet, 0, 0), "", "", "");
+    val waiting_result = new TestResult(
+      new CaseResult(ResultDescription.Waiting, 0, 0), "", "", "");
+    var result:TestResult = default_result
 
     override def render():NodeSeq = {
       (
-        ".tester-result" #> test_result.description &
-        ".tester-outdata" #> test_outdata &
-        ".tester-errdata" #> test_errdata
+        ".tester-result" #> result.result.description &
+        ".tester-indata" #> result.indata &
+        ".tester-outdata" #> result.outdata &
+        ".tester-errdata" #> result.errdata
       )(cache)
     }
   }
