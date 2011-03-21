@@ -15,6 +15,7 @@ import _root_.scala.xml.{Elem, NodeSeq}
 import _root_.scala.collection.immutable._
 import code.lib._
 import code.model._
+import code.lib.JudgeManager._
 
 class SubmitProblem extends CometActor {
   val problem = S.location.get.currentValue.get.asInstanceOf[Problem]
@@ -26,7 +27,7 @@ class SubmitProblem extends CometActor {
       TesterResultArea.result = r
       partialUpdate(TesterResultArea.reHtml)
     }
-    case (s:Submission,r:JudgeResult) => {
+    case PartialJudgeResult(s) => {
       partialUpdate(SubmissionList.reHtml & JudgeResultArea.reHtml)
     }
   }
@@ -96,15 +97,14 @@ class SubmitProblem extends CometActor {
       cs.problem(s.problem.is)
       cs.user(s.user.is)
       cs.lang(s.lang.is)
+      cs.judge_server(QueryServer.select_server())
       cs.state("Compiling")
       cs.score(0.0)
       cs.save()
       s.files.foreach {f =>
-        val sf = SourceFile.create.submission(cs).name(f)
-        sf.code(s.findfile(f).code.is)
-        sf.save()
+        writeFileAll(session_srcfile(cs, f), s.findfile(f).code.is)
       }
-      QueryServer ! new CompileQuery(cs, SubmitProblem.this)
+      cs.query_server ! new CompileQuery(cs, SubmitProblem.this)
       partialUpdate(SetHtml("submission-list-area",SubmissionList.render()))
       _Noop
     }
@@ -182,7 +182,7 @@ class SubmitProblem extends CometActor {
               }, { () =>
                 assert(s.judgeable)
                 s.state("Queueing").save()
-                QueryServer ! new JudgeQuery(s, SubmitProblem.this)
+                s.query_server ! new JudgeQuery(s, SubmitProblem.this)
                 SubmissionList.reHtml & SubmissionDetail.reHtml & JudgeResultArea.reHtml
             })
             case _ => NodeSeq.Empty
@@ -211,12 +211,12 @@ class SubmitProblem extends CometActor {
       )(cache)
 
     def renderCaseResults(s:Submission)(xhtml:NodeSeq):NodeSeq =
-      new JudgeResult(s.judge_result.is).l.zipWithIndex.flatMap({ case (cr,i) =>
-        renderCaseResult(cr,i)(xhtml)
+      s.case_results.flatMap({ case cr =>
+        renderCaseResult(cr)(xhtml)
       })
-    def renderCaseResult(cr:CaseResult, i:Int):(NodeSeq=>NodeSeq) =
-      ".case-id" #> i.toString &
-      ".case-result" #> cr.description
+    def renderCaseResult(cr:CaseResult):(NodeSeq=>NodeSeq) =
+      ".case-id" #> cr.caseid.is &
+      ".case-result" #> cr.description_tm
   }
   object TesterForm extends ReloadableComponent {
     override def component_id = "tester-form"
@@ -234,7 +234,7 @@ class SubmitProblem extends CometActor {
                 case Seq(e:Elem) => e.attribute("value").getOrElse("_").toString
                 case _ => "_"
               }, { () =>
-              QueryServer ! new TestQuery(s, test_input, SubmitProblem.this)
+              s.query_server ! new TestQuery(s, test_input, SubmitProblem.this)
               TesterResultArea.result = TesterResultArea.waiting_result
               TesterResultArea.reHtml
             })
@@ -246,15 +246,13 @@ class SubmitProblem extends CometActor {
   }
   object TesterResultArea extends ReloadableComponent {
     override def component_id = "test-result-area"
-    val default_result = new TestResult(
-      new CaseResult(ResultDescription.NotYet, 0, 0), "", "", "");
-    val waiting_result = new TestResult(
-      new CaseResult(ResultDescription.Waiting, 0, 0), "", "", "");
+    val default_result = new TestResult("NotYet", 0, 0, "", "", "");
+    val waiting_result = new TestResult("Waiting", 0, 0, "", "", "");
     var result:TestResult = default_result
 
     override def render():NodeSeq = {
       (
-        ".tester-result" #> result.result.description &
+        ".tester-result" #> result.description_tm &
         ".tester-indata" #> result.indata &
         ".tester-outdata" #> result.outdata &
         ".tester-errdata" #> result.errdata

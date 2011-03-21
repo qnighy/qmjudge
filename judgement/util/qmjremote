@@ -1,0 +1,10 @@
+#!/bin/sh
+remoteid=$1
+shift
+case $remoteid in
+    expired) echo "The Submission was expired." >&2; exit 1 ;;
+    local)
+        $(dirname $0)/qmjutil $@
+        ;;
+    *) echo "Unknown Judge Server" >&2; exit 1 ;;
+esac

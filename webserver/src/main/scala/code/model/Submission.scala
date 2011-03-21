@@ -13,8 +13,8 @@ class Submission extends LongKeyedMapper[Submission] with IdPK with OneToMany[Lo
   }
   object lang extends MappedString(this, 256)
   object state extends MappedString(this, 256)
+  object judge_server extends MappedString(this, 256)
   object compile_result extends MappedText(this)
-  object judge_result extends MappedText(this)
   object score extends MappedDouble(this)
 
   def runnable:Boolean = state.is == "Compiled" || state.is == "Queueing" || state.is == "Judging" || state.is == "Judged"
@@ -22,24 +22,21 @@ class Submission extends LongKeyedMapper[Submission] with IdPK with OneToMany[Lo
 
   def langname:String = JudgeManager.langDescription(lang.is)
   def files:List[String] = problem.obj.get.files(lang.is)
-  def findfile(f:String):SourceFile =
-    SourceFile.find(By(SourceFile.submission, this), By(SourceFile.name, f)) match {
-      case Full(sf) => sf
-      case _ => {
-        val sf = SourceFile.create.submission(this).name(f)
-        sf.save
-        sf
-      }
+
+  def query_server:QueryServer = QueryServer.servers(judge_server)
+  def case_results:Seq[CaseResult] =
+    CaseResult.findAll(
+      By(CaseResult.submission, this),
+      OrderBy(CaseResult.caseid, Ascending))
+  def case_result(i:Int):CaseResult = {
+    CaseResult.find(
+      By(CaseResult.submission, this),
+      By(CaseResult.caseid, i)
+    ) match {
+      case Full(cr) => cr
+      case _ => CaseResult.create.submission(this).caseid(i).saveMe()
     }
+  }
 }
 
 object Submission extends Submission with LongKeyedMetaMapper[Submission]
-
-class SourceFile extends LongKeyedMapper[SourceFile] with IdPK {
-  def getSingleton = SourceFile
-  object submission extends LongMappedMapper(this, Submission)
-  object name extends MappedString(this, 256)
-  object code extends MappedText(this)
-}
-
-object SourceFile extends SourceFile with LongKeyedMetaMapper[SourceFile]

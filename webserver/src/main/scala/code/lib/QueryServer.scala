@@ -2,19 +2,27 @@ package code.lib
 
 import _root_.scala.actors._
 import _root_.scala.actors.Actor._
+import _root_.scala.collection.immutable._
+import _root_.scala.util.Random
 import _root_.net.liftweb.http._
 import code.lib._
 import code.model._
 import JudgeManager._
 
-object QueryServer extends Actor {
+object QueryServer {
+  val server_list:List[String] = List("local")
+  val servers:Map[String,QueryServer] =
+    Map( server_list.map { s => (s -> new QueryServer()) } : _*)
+
+  def select_server():String = server_list(Random.nextInt(server_list.size))
+}
+
+class QueryServer extends Actor {
   override def act = loop {
     react {
       case CompileQuery(cs,returnee) => {
         assert(cs.state.is == "Compiling")
-        cs.files.foreach {f =>
-          writeFileAll(session_srcfile(cs, f), cs.findfile(f).code.is)
-        }
+
         val cproc = run_qmjutil(cs, "build-program")
         cs.compile_result(readAll(cproc.getInputStream()))
         val exv = cproc.exitValue();
@@ -41,32 +49,30 @@ object QueryServer extends Actor {
         val mem = timedata._2
 
         val tresult = readAll(tproc.getInputStream())
-        val resultDsc:ResultDescription.Value =
+        val description:String =
           if(mem > ts.problem.obj.get.memlimit)
-            ResultDescription.MemoryLimitExceeded
+            "MemoryLimitExceeded"
           else if(time > ts.problem.obj.get.timelimit)
-            ResultDescription.TimeLimitExceeded
+            "TimeLimitExceeded"
           else if(tresult containsSlice "RuntimeError")
-            ResultDescription.RuntimeError
+            "RuntimeError"
           else if(tproc.exitValue()==1)
-            ResultDescription.SystemError
+            "SystemError"
           else
-            ResultDescription.SuccessfullyRun
+            "SuccessfullyRun"
 
-        returnee ! new TestResult(new CaseResult(resultDsc, time, mem), indata, outdata, errdata)
+        returnee ! new TestResult(description, time, mem, indata, outdata, errdata)
       }
       case JudgeQuery(js,returnee) => {
         assert(js.state.is == "Queueing")
 
         val n = problem_datalen(js.problem.obj.get)
-        var jr = new JudgeResult(n)
-        js.state("Judging").judge_result(jr.toString).save()
-        returnee ! (js, jr)
-        println("initializing...")
-        println("judge_result = "+jr.toString)
-        println("n = "+n);
         for(i <- 0 until n) {
-          println("i = "+i);
+          js.case_result(i)
+        }
+        returnee ! new PartialJudgeResult(js)
+        for(i <- 0 until n) {
+          val cr = js.case_result(i)
           val jproc = run_qmjutil(js, "judge-once", i.toString)
 
           val timedata = parse_timedata(readFileAll(session_resultfile(js,"time.txt")))
@@ -74,30 +80,27 @@ object QueryServer extends Actor {
           val mem = timedata._2
 
           val jresult = readAll(jproc.getInputStream())
-          val resultDsc:ResultDescription.Value =
+          val description:String =
             if(mem > js.problem.obj.get.memlimit)
-              ResultDescription.MemoryLimitExceeded
+              "MemoryLimitExceeded"
             else if(time > js.problem.obj.get.timelimit)
-              ResultDescription.TimeLimitExceeded
+              "TimeLimitExceeded"
             else if(jresult containsSlice "RuntimeError")
-              ResultDescription.RuntimeError
+              "RuntimeError"
             else if(jproc.exitValue()==1)
-              ResultDescription.SystemError
+              "SystemError"
             else if(jresult containsSlice "Wrong")
-              ResultDescription.WrongAnswer
+              "WrongAnswer"
             else if(jresult containsSlice "Correct")
-              ResultDescription.Accepted
+              "Accepted"
             else
-              ResultDescription.SystemError
+              "SystemError"
 
-          jr = new JudgeResult(jr, i, new CaseResult(resultDsc, time, mem))
-          println("judge_result ="+jr.toString)
-          js.state("Judging").judge_result(jr.toString).save()
-          returnee ! (js, jr)
+          cr.description(description).time(time).mem(mem).save()
+          returnee ! new PartialJudgeResult(js)
         }
         js.state("Judged").save()
-        returnee ! (js, jr)
-        println("Judged! result="+jr.toString)
+        returnee ! new PartialJudgeResult(js)
       }
     }
   }
@@ -110,4 +113,9 @@ case class TestQuery(val s:Submission, val indata:String, val returnee:CometActo
 
 case class JudgeQuery(val s:Submission, val returnee:CometActor)
 
-case class TestResult(result:CaseResult, indata:String, outdata:String, errdata:String)
+case class TestResult(description:String, time:Int, mem:Int, indata:String, outdata:String, errdata:String) {
+  def description_tm:String =
+    JudgeManager.description_tm(description, time, mem)
+}
+
+case class PartialJudgeResult(val s:Submission)

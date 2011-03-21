@@ -6,17 +6,18 @@ import _root_.java.io.File
 
 object JudgeManager {
   val langDescription:Map[String,String] = Map("cpp"->"C++","java"->"Java")
-  val qmjutil_file = new File("/home/qnighy/qmjudge/judgement/util/qmjutil")
-  val session_base_dir = new File("/home/qnighy/qmjudge/judgement/session/")
-  val problem_base_dir = new File("/home/qnighy/qmjudge/judgement/prob/")
+  val qmjremote_file = new File("../judgement/util/qmjremote")
+  val session_base_dir = new File("../judgement/session/")
+  val problem_base_dir = new File("../judgement/prob/")
 
   def run_qmjutil(s:Submission, args:String*):java.lang.Process = {
     val proc = new ProcessBuilder(
-        qmjutil_file.getAbsolutePath() ::
-        session_dir(s).getAbsolutePath() ::
-        s.problem.obj.get.dirname.is ::
-        s.lang.is ::
-        args.toList).redirectErrorStream(true).start()
+      qmjremote_file.getAbsolutePath() ::
+      s.judge_server.is ::
+      session_dir(s).getAbsolutePath() ::
+      s.problem.obj.get.dirname.is ::
+      s.lang.is ::
+      args.toList).redirectErrorStream(true).start()
     proc.getOutputStream().close()
     proc.waitFor()
     return proc
@@ -90,5 +91,17 @@ object JudgeManager {
       }
     }
   }
+
+  def description_tm(description:String, time:Int, mem:Int):String =
+    description match {
+      case "NotYet" => "NotYet"
+      case "Waiting" => "Waiting"
+      case _ => "%s / %s / %s".format(
+        description,
+        "%02d.%03d".format(time/1000, time%1000),
+        "%d".format(mem)
+      )
+    }
+
 }
 
